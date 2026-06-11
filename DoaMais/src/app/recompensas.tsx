@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAppContext } from '../context/AppContext';
 
 export default function Recompensas() {
+  const { user, resgatarRecompensa } = useAppContext();
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -11,7 +14,7 @@ export default function Recompensas() {
           <Text style={styles.hdesc}>Troque seus pontos por cupons.</Text>
         </View>
         <View style={styles.ptsBadge}>
-          <Text style={styles.ptsVal}>147</Text>
+          <Text style={styles.ptsVal}>{user.pontos}</Text>
           <Text style={styles.ptsLbl}>Pts</Text>
         </View>
       </View>
@@ -20,7 +23,7 @@ export default function Recompensas() {
         <Text style={styles.sect}>Mercado Local</Text>
         <View style={styles.ticketGrid}>
           
-          <TouchableOpacity style={styles.ticketCard}>
+          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(50, '15% Off Hortifruti')}>
             <View style={styles.ticketTop}>
               <MaterialCommunityIcons name="food-apple-outline" size={20} color="#1B4332" />
               <View style={styles.ticketCost}><Text style={styles.tcText}>50 pts</Text></View>
@@ -29,7 +32,7 @@ export default function Recompensas() {
             <Text style={styles.tDesc}>Válido no Supermercado Central</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.ticketCard}>
+          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(100, 'Passe Livre Urbano')}>
             <View style={styles.ticketTop}>
               <MaterialCommunityIcons name="bus" size={20} color="#1B4332" />
               <View style={styles.ticketCost}><Text style={styles.tcText}>100 pts</Text></View>
@@ -38,7 +41,7 @@ export default function Recompensas() {
             <Text style={styles.tDesc}>2 passagens de ônibus grátis</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.ticketCard}>
+          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(200, '30% Off Livraria')}>
             <View style={styles.ticketTop}>
               <Feather name="book" size={20} color="#1B4332" />
               <View style={styles.ticketCost}><Text style={styles.tcText}>200 pts</Text></View>
@@ -47,13 +50,13 @@ export default function Recompensas() {
             <Text style={styles.tDesc}>Apoie o comércio local de livros</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.ticketCard, { opacity: 0.6 }]}>
+          <TouchableOpacity style={[styles.ticketCard, { opacity: user.pontos >= 300 ? 1 : 0.6 }]} onPress={() => resgatarRecompensa(300, 'Café Artesanal')}>
             <View style={styles.ticketTop}>
               <Feather name="coffee" size={20} color="#1B4332" />
-              <View style={[styles.ticketCost, { backgroundColor: '#ccc' }]}><Text style={styles.tcText}>300 pts</Text></View>
+              <View style={[styles.ticketCost, { backgroundColor: user.pontos >= 300 ? '#D8F3DC' : '#ccc' }]}><Text style={styles.tcText}>300 pts</Text></View>
             </View>
             <Text style={styles.tTitle}>Café Artesanal</Text>
-            <Text style={styles.tDesc}>Faltam 153 pontos</Text>
+            <Text style={styles.tDesc}>{user.pontos >= 300 ? 'Disponível para resgate' : `Faltam ${300 - user.pontos} pontos`}</Text>
           </TouchableOpacity>
 
         </View>
