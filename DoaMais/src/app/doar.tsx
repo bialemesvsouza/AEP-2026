@@ -1,9 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAppContext } from '../context/AppContext';
+import { useRouter } from 'expo-router';
 
 export default function Doar() {
   const [pontoColeta, setPontoColeta] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { processarDoacao } = useAppContext();
+  const router = useRouter();
+
+  const handleDoacao = async () => {
+    if (!pontoColeta || !descricao) {
+      Alert.alert("Erro", "Preencha o ponto de coleta e o que vai doar.");
+      return;
+    }
+    
+    setLoading(true);
+    // Envia para o Backend Python classificar a IA
+    const resultado = await processarDoacao(pontoColeta, descricao);
+    setLoading(false);
+
+    if (resultado) {
+      Alert.alert(
+        "Rota Gerada! 🚀", 
+        `Análise da IA: ${resultado.motivoIA}\nVocê vai ganhar ${resultado.totalPontos} pontos ao entregar!`,
+        [{ text: "OK", onPress: () => router.push('/home') }]
+      );
+      setDescricao('');
+      setPontoColeta('');
+    }
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -17,7 +45,6 @@ export default function Doar() {
         <View style={styles.mapWrap}>
           <View style={styles.mapBg}>
             <View style={styles.mapGridOverlay} />
-            {/* Pinos do Mapa Simulado */}
             <TouchableOpacity style={[styles.mapPin, { top: '30%', left: '20%' }]} onPress={() => setPontoColeta('Igreja Matriz - Centro')}>
               <View style={styles.mapBubble}><Feather name="home" size={14} color="#1B4332" /></View>
               <Text style={styles.mapLbl}>Centro</Text>
@@ -31,29 +58,23 @@ export default function Doar() {
         </View>
 
         <Text style={styles.label}>Ponto de Coleta Selecionado</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Toque em um pino no mapa acima" 
-          value={pontoColeta}
-          onChangeText={setPontoColeta}
-        />
+        <TextInput style={styles.input} placeholder="Toque em um pino no mapa" value={pontoColeta} onChangeText={setPontoColeta} />
 
         <Text style={styles.label}>O que você vai doar?</Text>
-        <TextInput style={styles.input} placeholder="Ex: 3 casacos de lã" />
+        <TextInput style={styles.input} placeholder="Ex: 3 casacos de lã" value={descricao} onChangeText={setDescricao} />
 
         <TouchableOpacity style={styles.modCard}>
           <MaterialCommunityIcons name="brain" size={24} color="#2D6A4F" />
           <View style={{flex: 1}}>
-            <Text style={styles.modT}>Análise Inteligente</Text>
-            <Text style={styles.modD}>A IA irá calcular seus pontos baseados na demanda local.</Text>
+            <Text style={styles.modT}>Processamento por IA no Backend</Text>
+            <Text style={styles.modD}>A API Python usará Regex para classificar a demanda e calcular os pontos no BD.</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.confirmBtn}>
-          <Text style={styles.confirmText}>Confirmar e Gerar Rota</Text>
+        <TouchableOpacity style={styles.confirmBtn} onPress={handleDoacao} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirmar e Gerar Rota</Text>}
         </TouchableOpacity>
       </View>
-      <View style={{height: 20}} />
     </ScrollView>
   );
 }

@@ -2,20 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAppContext } from '../context/AppContext';
 
 export default function Home() {
   const router = useRouter();
   const [modalAlertas, setModalAlertas] = useState(false);
+  const { user, alertasIA } = useAppContext();
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F4FBF6' }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         
-        {/* HEADER IDÊNTICO AO HTML */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Bom dia, Lucas</Text>
+              <Text style={styles.greeting}>Bom dia, {user.nome.split(' ')[0]}</Text>
               <Text style={styles.htitle}>DoaMais</Text>
             </View>
             <TouchableOpacity style={styles.notifbtn} onPress={() => setModalAlertas(true)}>
@@ -32,45 +33,43 @@ export default function Home() {
           </View>
         </View>
 
-        {/* MONITORAMENTO - GRID 2x2 COMO NO HTML ORIGINAL */}
         <View style={styles.sec}>
           <View style={styles.sech}>
-            <Text style={styles.sect}>Monitoramento de Doações</Text>
+            <Text style={styles.sect}>Monitoramento do BD (SQLAlchemy)</Text>
             <Text style={styles.seca}>Tempo real</Text>
           </View>
           <View style={styles.iotGrid}>
             <View style={[styles.iotCard, { borderColor: '#52B788' }]}>
               <Text style={styles.em}>👕</Text>
-              <Text style={styles.iotVal}>87</Text>
-              <Text style={styles.iotUnit}>Peças</Text>
+              <Text style={styles.iotVal}>{user.doacoes}</Text>
+              <Text style={styles.iotUnit}>Qtd. Geral</Text>
               <View style={[styles.iotDot, { backgroundColor: '#52B788' }]} />
-              <Text style={styles.iotLbl}>Roupas</Text>
+              <Text style={styles.iotLbl}>Doações Feitas</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#E8A87C' }]}>
               <Text style={styles.em}>🥫</Text>
-              <Text style={styles.iotVal}>24</Text>
+              <Text style={styles.iotVal}>{user.peso_doado}</Text>
               <Text style={styles.iotUnit}>Kg</Text>
               <View style={[styles.iotDot, { backgroundColor: '#E8A87C' }]} />
-              <Text style={styles.iotLbl}>Alimentos</Text>
+              <Text style={styles.iotLbl}>Peso Estimado</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#52B788' }]}>
-              <Text style={styles.em}>🧸</Text>
-              <Text style={styles.iotVal}>12</Text>
-              <Text style={styles.iotUnit}>Itens</Text>
+              <Text style={styles.em}>👨‍👩‍👧</Text>
+              <Text style={styles.iotVal}>{user.familias_ajudadas}</Text>
+              <Text style={styles.iotUnit}>Pessoas</Text>
               <View style={[styles.iotDot, { backgroundColor: '#52B788' }]} />
-              <Text style={styles.iotLbl}>Brinquedos</Text>
+              <Text style={styles.iotLbl}>Famílias Ajudadas</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#40916C' }]}>
               <Text style={styles.em}>♻️</Text>
-              <Text style={styles.iotVal}>91</Text>
+              <Text style={styles.iotVal}>{user.pontos}</Text>
               <Text style={styles.iotUnit}>Pontos</Text>
               <View style={[styles.iotDot, { backgroundColor: '#40916C' }]} />
-              <Text style={styles.iotLbl}>Acumulados</Text>
+              <Text style={styles.iotLbl}>Saldo Atual</Text>
             </View>
           </View>
         </View>
 
-        {/* AÇÕES RÁPIDAS */}
         <View style={styles.sec}>
           <View style={styles.sech}><Text style={styles.sect}>Ações Rápidas</Text></View>
           <View style={styles.qaRow}>
@@ -93,37 +92,20 @@ export default function Home() {
           </View>
         </View>
 
-        {/* ALERTAS RECENTES (LISTA DE VOLTA NA HOME COMO NO HTML) */}
-        <View style={styles.sec}>
-          <View style={styles.sech}><Text style={styles.sect}>Alertas Recentes</Text><Text style={styles.seca}>Todos</Text></View>
-          <View style={styles.alertRow}>
-            <View style={[styles.arIcon, { backgroundColor: '#D8F3DC' }]}><Text style={{fontSize: 16}}>🌱</Text></View>
-            <Text style={styles.arText}>Novo ponto de coleta na Av. Brasil</Text>
-            <Text style={styles.arTime}>2min</Text>
-          </View>
-          <View style={styles.alertRow}>
-            <View style={[styles.arIcon, { backgroundColor: '#D8F3DC' }]}><Text style={{fontSize: 16}}>💡</Text></View>
-            <Text style={styles.arText}>Doações de agasalhos valendo 2x pontos</Text>
-            <Text style={styles.arTime}>15min</Text>
-          </View>
-        </View>
-
-        {/* IMPACTO MENSAL */}
         <View style={styles.impact}>
           <Text style={styles.impactT}>SEU IMPACTO ESTE MÊS</Text>
           <View style={styles.impactRow}>
-            <View style={styles.impactStat}><Text style={styles.impactVal}>5</Text><Text style={styles.impactLbl}>Famílias</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.familias_ajudadas}</Text><Text style={styles.impactLbl}>Famílias</Text></View>
             <View style={styles.idiv} />
-            <View style={styles.impactStat}><Text style={styles.impactVal}>18kg</Text><Text style={styles.impactLbl}>Doados</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.peso_doado}kg</Text><Text style={styles.impactLbl}>Doados</Text></View>
             <View style={styles.idiv} />
-            <View style={styles.impactStat}><Text style={styles.impactVal}>147</Text><Text style={styles.impactLbl}>Pontos</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.pontos}</Text><Text style={styles.impactLbl}>Pontos</Text></View>
           </View>
         </View>
         
         <View style={{height: 30}} />
       </ScrollView>
 
-      {/* O MODAL FICA AQUI APENAS PARA ALERTAS DA IA AO CLICAR NO SINO */}
       <Modal visible={modalAlertas} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -134,13 +116,15 @@ export default function Home() {
               </TouchableOpacity>
             </View>
             <ScrollView>
-              <View style={styles.alertCard}>
-                <Feather name="info" size={20} color="#52B788" style={{marginRight: 10}}/>
-                <View style={{flex: 1}}>
-                  <Text style={styles.acTitle}>Frio Extremo se aproximando</Text>
-                  <Text style={styles.acDesc}>A IA detectou queda na temperatura. A demanda por cobertores aumentou na sua região.</Text>
+              {alertasIA.map((alerta: any) => (
+                <View key={alerta.id} style={styles.alertCard}>
+                  <Feather name="info" size={20} color="#52B788" style={{marginRight: 10}}/>
+                  <View style={{flex: 1}}>
+                    <Text style={styles.acTitle}>{alerta.titulo}</Text>
+                    <Text style={styles.acDesc}>{alerta.desc}</Text>
+                  </View>
                 </View>
-              </View>
+              ))}
             </ScrollView>
           </View>
         </View>
@@ -163,8 +147,6 @@ const styles = StyleSheet.create({
   sech: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   sect: { fontSize: 15, fontWeight: 'bold', color: '#1B4332' },
   seca: { fontSize: 12, fontWeight: 'bold', color: '#52B788' },
-  
-  // O GRID 2x2 ORIGINAL
   iotGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   iotCard: { width: '48%', backgroundColor: '#fff', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center', borderWidth: 1.5, elevation: 1, marginBottom: 10 },
   em: { fontSize: 20, marginBottom: 3 },
@@ -172,18 +154,10 @@ const styles = StyleSheet.create({
   iotUnit: { fontSize: 10, color: '#6B9E82', fontWeight: 'bold', marginBottom: 4 },
   iotDot: { width: 7, height: 7, borderRadius: 3.5, marginBottom: 3 },
   iotLbl: { fontSize: 10, color: '#4A6B5B', fontWeight: 'bold', textAlign: 'center' },
-  
   qaRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   qa: { alignItems: 'center', flex: 1 },
   qaIcon: { width: 50, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', elevation: 2, marginBottom: 5 },
   qaLbl: { fontSize: 10, color: '#4A6B5B', fontWeight: 'bold', textAlign: 'center' },
-  
-  // ESTILO DOS ALERTAS NA HOME
-  alertRow: { backgroundColor: '#fff', borderRadius: 12, padding: 10, flexDirection: 'row', alignItems: 'center', marginBottom: 7, elevation: 1 },
-  arIcon: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  arText: { flex: 1, fontSize: 11, color: '#1B4332', fontWeight: 'bold' },
-  arTime: { fontSize: 10, color: '#6B9E82', fontWeight: 'bold' },
-  
   impact: { margin: 14, backgroundColor: '#2D6A4F', borderRadius: 18, padding: 16 },
   impactT: { color: '#B7E4C7', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 12 },
   impactRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' },
@@ -191,7 +165,6 @@ const styles = StyleSheet.create({
   impactVal: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   impactLbl: { color: '#B7E4C7', fontSize: 10, fontWeight: 'bold', marginTop: 2 },
   idiv: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,.2)' },
-  
   modalOverlay: { flex: 1, backgroundColor: 'rgba(27,67,50,0.6)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#F4FBF6', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: '50%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
