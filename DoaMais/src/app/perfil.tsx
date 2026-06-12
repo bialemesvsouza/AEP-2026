@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export default function Perfil() {
+  const router = useRouter();
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -33,13 +36,14 @@ export default function Perfil() {
       </View>
 
       <View style={styles.sec}>
-        <Text style={styles.sect}>Menu</Text>
-        <TouchableOpacity style={styles.menuItem}>
+        <Text style={styles.sect}>Menu</Text>      
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/historico')}>
           <Feather name="clipboard" size={16} color="#1B4332" style={styles.miIcon} />
           <Text style={styles.miLabel}>Meu Histórico</Text>
           <Feather name="chevron-right" size={16} color="#6B9E82" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/conquistas')}>
           <Feather name="award" size={16} color="#1B4332" style={styles.miIcon} />
           <Text style={styles.miLabel}>Conquistas</Text>
           <Feather name="chevron-right" size={16} color="#6B9E82" />

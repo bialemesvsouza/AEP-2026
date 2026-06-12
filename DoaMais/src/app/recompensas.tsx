@@ -1,10 +1,47 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
 
 export default function Recompensas() {
-  const { user, resgatarRecompensa } = useAppContext();
+  const { user, resgatarRecompensa, loja } = useAppContext();
+
+
+  const IconeDinamico = ({ tipo, nome }: { tipo: string, nome: any }) => {
+    if (tipo === 'MaterialCommunityIcons') {
+      return <MaterialCommunityIcons name={nome} size={20} color="#1B4332" />;
+    }
+    return <Feather name={nome} size={20} color="#1B4332" />;
+  };
+
+
+  const renderCard = (item: any) => {
+    if (!user) return null;
+
+    const saldoSuficiente = user.pontos >= item.custo_pontos;
+    const pontosFaltantes = item.custo_pontos - user.pontos;
+
+    return (
+      <TouchableOpacity 
+        key={item.id}
+        style={[styles.ticketCard, { opacity: saldoSuficiente ? 1 : 0.6 }]} 
+        disabled={!saldoSuficiente} 
+        onPress={() => resgatarRecompensa(item.id, item.custo_pontos, item.nome)}
+      >
+        <View style={styles.ticketTop}>
+          <IconeDinamico tipo={item.tipo_icone} nome={item.icone} />
+          
+          <View style={[styles.ticketCost, { backgroundColor: saldoSuficiente ? '#D8F3DC' : '#ccc' }]}>
+            <Text style={styles.tcText}>{item.custo_pontos} pts</Text>
+          </View>
+        </View>
+        <Text style={styles.tTitle}>{item.nome}</Text>
+        <Text style={styles.tDesc}>
+          {saldoSuficiente ? item.descricao : `Faltam ${pontosFaltantes} pontos`}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -14,52 +51,24 @@ export default function Recompensas() {
           <Text style={styles.hdesc}>Troque seus pontos por cupons.</Text>
         </View>
         <View style={styles.ptsBadge}>
-          <Text style={styles.ptsVal}>{user.pontos}</Text>
+          <Text style={styles.ptsVal}>{user ? user.pontos : 0}</Text>
           <Text style={styles.ptsLbl}>Pts</Text>
         </View>
       </View>
 
       <View style={styles.sec}>
         <Text style={styles.sect}>Mercado Local</Text>
-        <View style={styles.ticketGrid}>
-          
-          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(50, '15% Off Hortifruti')}>
-            <View style={styles.ticketTop}>
-              <MaterialCommunityIcons name="food-apple-outline" size={20} color="#1B4332" />
-              <View style={styles.ticketCost}><Text style={styles.tcText}>50 pts</Text></View>
-            </View>
-            <Text style={styles.tTitle}>15% Off Hortifruti</Text>
-            <Text style={styles.tDesc}>Válido no Supermercado Central</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(100, 'Passe Livre Urbano')}>
-            <View style={styles.ticketTop}>
-              <MaterialCommunityIcons name="bus" size={20} color="#1B4332" />
-              <View style={styles.ticketCost}><Text style={styles.tcText}>100 pts</Text></View>
-            </View>
-            <Text style={styles.tTitle}>Passe Livre Urbano</Text>
-            <Text style={styles.tDesc}>2 passagens de ônibus grátis</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.ticketCard} onPress={() => resgatarRecompensa(200, '30% Off Livraria')}>
-            <View style={styles.ticketTop}>
-              <Feather name="book" size={20} color="#1B4332" />
-              <View style={styles.ticketCost}><Text style={styles.tcText}>200 pts</Text></View>
-            </View>
-            <Text style={styles.tTitle}>30% Off Livraria</Text>
-            <Text style={styles.tDesc}>Apoie o comércio local de livros</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.ticketCard, { opacity: user.pontos >= 300 ? 1 : 0.6 }]} onPress={() => resgatarRecompensa(300, 'Café Artesanal')}>
-            <View style={styles.ticketTop}>
-              <Feather name="coffee" size={20} color="#1B4332" />
-              <View style={[styles.ticketCost, { backgroundColor: user.pontos >= 300 ? '#D8F3DC' : '#ccc' }]}><Text style={styles.tcText}>300 pts</Text></View>
-            </View>
-            <Text style={styles.tTitle}>Café Artesanal</Text>
-            <Text style={styles.tDesc}>{user.pontos >= 300 ? 'Disponível para resgate' : `Faltam ${300 - user.pontos} pontos`}</Text>
-          </TouchableOpacity>
-
-        </View>
+        
+        {!loja || loja.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#52B788" />
+            <Text style={styles.loadingText}>Carregando prateleiras...</Text>
+          </View>
+        ) : (
+          <View style={styles.ticketGrid}>
+            {loja.map((item: any) => renderCard(item))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -75,10 +84,12 @@ const styles = StyleSheet.create({
   ptsLbl: { color: '#1B4332', fontSize: 10, fontWeight: 'bold' },
   sec: { padding: 14 },
   sect: { fontSize: 15, fontWeight: 'bold', color: '#1B4332', marginBottom: 12 },
+  loadingContainer: { marginTop: 40, alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#6B9E82', fontWeight: 'bold' },
   ticketGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
   ticketCard: { width: '48%', backgroundColor: '#fff', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#D8F3DC', borderStyle: 'dashed', elevation: 1 },
   ticketTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
-  ticketCost: { backgroundColor: '#D8F3DC', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  ticketCost: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
   tcText: { color: '#1B4332', fontSize: 10, fontWeight: 'bold' },
   tTitle: { fontSize: 12, fontWeight: 'bold', color: '#1B4332', marginBottom: 4 },
   tDesc: { fontSize: 10, color: '#4A6B5B' }

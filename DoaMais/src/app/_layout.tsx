@@ -28,6 +28,10 @@ export default function Layout() {
         <Tabs.Screen name="index" options={{ href: null }} />
         <Tabs.Screen name="mapa" options={{ href: null }} />
         <Tabs.Screen name="alertas" options={{ href: null }} />
+        
+        <Tabs.Screen name="historico" options={{ href: null }} />
+        <Tabs.Screen name="conquistas" options={{ href: null }} />
+
         <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: ({ color }) => <Feather name="home" size={24} color={color} /> }} />
         <Tabs.Screen name="doar" options={{ title: 'Doar', tabBarIcon: ({ color }) => <Feather name="heart" size={24} color={color} /> }} />
         <Tabs.Screen name="recompensas" options={{ title: 'Loja', tabBarIcon: ({ color }) => <Feather name="shopping-bag" size={24} color={color} /> }} />
