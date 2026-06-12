@@ -6,13 +6,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 import re
 import difflib
 from datetime import datetime
-
-
+import urllib.request
+import json
 
 # Para rodar o backend 
 # uvicorn main:app --host 0.0.0.0 --port 8000
-
-
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./doamais.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -78,7 +76,6 @@ def popular_banco_inicial():
 
 popular_banco_inicial()
 
-
 class DoacaoRequest(BaseModel):
     usuario_id: int
     ponto_coleta: str
@@ -100,23 +97,53 @@ def obter_data_formatada():
     agora = datetime.now()
     return f"{agora.day:02d} {meses[agora.month]} {agora.year}"
 
+def get_temperatura_atual():
+    try:
+        url = "https://api.open-meteo.com/v1/forecast?latitude=-23.4205&longitude=-51.9333&current_weather=true"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            return data['current_weather']['temperature']
+    except Exception as e:
+        print("Erro ao buscar clima:", e)
+        return 25.0
 
 def analisar_doacao_ia(descricao: str):
     palavras = descricao.lower().split()
     pontos_base = 10
+    temperatura = get_temperatura_atual()
     
-    frio_keywords = ['agasalho', 'casaco', 'cobertor', 'lã', 'frio', 'moletom', 'blusa']
+    frio_keywords = ['agasalho', 'casaco', 'cobertor', 'lã', 'frio', 'moletom', 'blusa', 'jaqueta']
+    calor_keywords = ['camiseta', 'short', 'shorts', 'regata', 'bermuda', 'verão']
     alimento_keywords = ['água', 'alimento', 'comida', 'arroz', 'feijão', 'macarrão', 'leite', 'óleo']
+    higiene_keywords = ['sabonete', 'shampoo', 'escova', 'pasta', 'fralda', 'papel', 'absorvente']
+    eletronico_keywords = ['celular', 'computador', 'tablet', 'tv', 'notebook', 'televisão']
     
     for palavra in palavras:
         if difflib.get_close_matches(palavra, frio_keywords, n=1, cutoff=0.8):
-            return pontos_base * 2, 2, "Alta demanda por frio (IA corrigiu/detectou o item) +100% Pontos"
-        if difflib.get_close_matches(palavra, alimento_keywords, n=1, cutoff=0.8):
-            return int(pontos_base * 1.5), 1, "Item essencial em escassez (IA detectou o item) +50% Pontos"
-            
-    return pontos_base, 1, "Doação padrão registrada. Agradecemos a colaboração!"
+            if temperatura <= 24.0:
+                return pontos_base * 3, 2, f"Dia frio detectado ({temperatura}°C)! Alta demanda por roupas de inverno (+200% Pontos)"
+            else:
+                return int(pontos_base * 1.5), 2, f"Roupas de frio arrecadadas. O clima atual é de {temperatura}°C (+50% Pontos)"
 
-# --- INÍCIO DA API ---
+        if difflib.get_close_matches(palavra, calor_keywords, n=1, cutoff=0.8):
+            if temperatura >= 25.0:
+                return pontos_base * 3, 1, f"Dia quente detectado ({temperatura}°C)! Alta demanda por roupas frescas (+200% Pontos)"
+            else:
+                return int(pontos_base * 1.5), 1, f"Roupas frescas arrecadadas. O clima atual é de {temperatura}°C (+50% Pontos)"
+                
+        if difflib.get_close_matches(palavra, alimento_keywords, n=1, cutoff=0.8):
+            return int(pontos_base * 1.5), 1, "Item essencial em escassez detectado (+50% Pontos)"
+            
+        if difflib.get_close_matches(palavra, higiene_keywords, n=1, cutoff=0.8):
+            return pontos_base * 2, 1, "Itens de higiene íntima são muito necessários (+100% Pontos)"
+            
+        if difflib.get_close_matches(palavra, eletronico_keywords, n=1, cutoff=0.8):
+            return pontos_base * 4, 3, "Eletrônicos possuem alto valor de reciclagem e reuso (+300% Pontos)"
+            
+    return pontos_base, 1, f"Doação padrão registrada. Temperatura local: {temperatura}°C. Agradecemos a colaboração!"
+
+
 app = FastAPI(title="DoaMais API Protótipo")
 
 app.add_middleware(
