@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppContext } from '../context/AppContext';
@@ -9,6 +9,49 @@ export default function Home() {
   const [modalAlertas, setModalAlertas] = useState(false);
   const { user, alertasIA } = useAppContext();
 
+  const [temperatura, setTemperatura] = useState<number | null>(null);
+  const [loadingClima, setLoadingClima] = useState(true);
+
+  useEffect(() => {
+    const fetchClima = async () => {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.4205&longitude=-51.9333&current_weather=true');
+        const data = await res.json();
+        setTemperatura(data.current_weather.temperature);
+      } catch (error) {
+        console.error("Erro ao buscar clima:", error);
+        setTemperatura(25); 
+      } finally {
+        setLoadingClima(false);
+      }
+    };
+    fetchClima();
+  }, []);
+
+  const getClimaInfo = () => {
+    if (temperatura === null) return null;
+    
+    if (temperatura >= 25) {
+      return {
+        tipo: 'Dia quente',
+        mensagem: 'A doação dará mais pontos para roupas frescas (camisetas, shorts).',
+        icone: 'weather-sunny',
+        cor: '#E07A5F',
+        bg: '#FDF0ED'
+      };
+    } else {
+      return {
+        tipo: 'Dia frio',
+        mensagem: 'A doação dará mais pontos para roupas de inverno (casacos, etc).',
+        icone: 'weather-snowy',
+        cor: '#3D5A80',
+        bg: '#E0FBFC'
+      };
+    }
+  };
+
+  const climaInfo = getClimaInfo();
+
   return (
     <View style={{ flex: 1, backgroundColor: '#F4FBF6' }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -16,7 +59,7 @@ export default function Home() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Bom dia, {user.nome.split(' ')[0]}</Text>
+              <Text style={styles.greeting}>Bom dia, {user?.nome?.split(' ')[0] || 'Doador'}</Text>
               <Text style={styles.htitle}>DoaMais</Text>
             </View>
             <TouchableOpacity style={styles.notifbtn} onPress={() => setModalAlertas(true)}>
@@ -24,45 +67,60 @@ export default function Home() {
               <Feather name="bell" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
-          <View style={styles.odsbadge}>
-            <MaterialCommunityIcons name="city-variant-outline" size={22} color="#52B788" />
-            <View>
-              <Text style={styles.odsLabel}>ODS 11 — Nações Unidas</Text>
-              <Text style={styles.odsText}>Cidades e Comunidades Sustentáveis</Text>
+
+          {loadingClima ? (
+            <ActivityIndicator size="small" color="#52B788" style={{ marginTop: 10 }} />
+          ) : climaInfo ? (
+            <View style={[styles.climaBadge, { backgroundColor: climaInfo.bg }]}>
+              <MaterialCommunityIcons name={climaInfo.icone as any} size={28} color={climaInfo.cor} />
+              <View style={{ flex: 1 }}>
+                <View style={styles.climaRow}>
+                  <Text style={[styles.climaLabel, { color: climaInfo.cor }]}>
+                    {temperatura}ºC • Maringá - PR
+                  </Text>
+                  <Text style={[styles.climaAlert, { color: climaInfo.cor }]}>
+                    {climaInfo.tipo}
+                  </Text>
+                </View>
+                <Text style={[styles.climaText, { color: climaInfo.cor }]}>
+                  {climaInfo.mensagem}
+                </Text>
+              </View>
             </View>
-          </View>
+          ) : null}
+
         </View>
 
         <View style={styles.sec}>
           <View style={styles.sech}>
-            <Text style={styles.sect}>Monitoramento do BD (SQLAlchemy)</Text>
+            <Text style={styles.sect}>Monitoramento das doações</Text>
             <Text style={styles.seca}>Tempo real</Text>
           </View>
           <View style={styles.iotGrid}>
             <View style={[styles.iotCard, { borderColor: '#52B788' }]}>
               <Text style={styles.em}>👕</Text>
-              <Text style={styles.iotVal}>{user.doacoes}</Text>
+              <Text style={styles.iotVal}>{user?.doacoes || 0}</Text>
               <Text style={styles.iotUnit}>Qtd. Geral</Text>
               <View style={[styles.iotDot, { backgroundColor: '#52B788' }]} />
               <Text style={styles.iotLbl}>Doações Feitas</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#E8A87C' }]}>
               <Text style={styles.em}>🥫</Text>
-              <Text style={styles.iotVal}>{user.peso_doado}</Text>
+              <Text style={styles.iotVal}>{user?.peso_doado || 0}</Text>
               <Text style={styles.iotUnit}>Kg</Text>
               <View style={[styles.iotDot, { backgroundColor: '#E8A87C' }]} />
               <Text style={styles.iotLbl}>Peso Estimado</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#52B788' }]}>
               <Text style={styles.em}>👨‍👩‍👧</Text>
-              <Text style={styles.iotVal}>{user.familias_ajudadas}</Text>
+              <Text style={styles.iotVal}>{user?.familias_ajudadas || 0}</Text>
               <Text style={styles.iotUnit}>Pessoas</Text>
               <View style={[styles.iotDot, { backgroundColor: '#52B788' }]} />
               <Text style={styles.iotLbl}>Famílias Ajudadas</Text>
             </View>
             <View style={[styles.iotCard, { borderColor: '#40916C' }]}>
               <Text style={styles.em}>♻️</Text>
-              <Text style={styles.iotVal}>{user.pontos}</Text>
+              <Text style={styles.iotVal}>{user?.pontos || 0}</Text>
               <Text style={styles.iotUnit}>Pontos</Text>
               <View style={[styles.iotDot, { backgroundColor: '#40916C' }]} />
               <Text style={styles.iotLbl}>Saldo Atual</Text>
@@ -81,7 +139,7 @@ export default function Home() {
               <View style={[styles.qaIcon, { backgroundColor: '#2D6A4F' }]}><Feather name="shopping-cart" size={20} color="#fff" /></View>
               <Text style={styles.qaLbl}>Loja</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.qa}>
+            <TouchableOpacity style={styles.qa} onPress={() => router.push('/mapa')}>
               <View style={[styles.qaIcon, { backgroundColor: '#1B4332' }]}><Feather name="map-pin" size={20} color="#fff" /></View>
               <Text style={styles.qaLbl}>Mapa</Text>
             </TouchableOpacity>
@@ -95,11 +153,11 @@ export default function Home() {
         <View style={styles.impact}>
           <Text style={styles.impactT}>SEU IMPACTO ESTE MÊS</Text>
           <View style={styles.impactRow}>
-            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.familias_ajudadas}</Text><Text style={styles.impactLbl}>Famílias</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user?.familias_ajudadas || 0}</Text><Text style={styles.impactLbl}>Famílias</Text></View>
             <View style={styles.idiv} />
-            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.peso_doado}kg</Text><Text style={styles.impactLbl}>Doados</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user?.peso_doado || 0}kg</Text><Text style={styles.impactLbl}>Doados</Text></View>
             <View style={styles.idiv} />
-            <View style={styles.impactStat}><Text style={styles.impactVal}>{user.pontos}</Text><Text style={styles.impactLbl}>Pontos</Text></View>
+            <View style={styles.impactStat}><Text style={styles.impactVal}>{user?.pontos || 0}</Text><Text style={styles.impactLbl}>Pontos</Text></View>
           </View>
         </View>
         
@@ -116,7 +174,7 @@ export default function Home() {
               </TouchableOpacity>
             </View>
             <ScrollView>
-              {alertasIA.map((alerta: any) => (
+              {alertasIA?.map((alerta: any) => (
                 <View key={alerta.id} style={styles.alertCard}>
                   <Feather name="info" size={20} color="#52B788" style={{marginRight: 10}}/>
                   <View style={{flex: 1}}>
@@ -140,9 +198,13 @@ const styles = StyleSheet.create({
   htitle: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
   notifbtn: { width: 38, height: 38, backgroundColor: 'rgba(255,255,255,.12)', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   ndot: { position: 'absolute', top: 7, right: 7, width: 7, height: 7, backgroundColor: '#5DDE8C', borderRadius: 4, borderWidth: 1, borderColor: '#1B4332', zIndex: 1 },
-  odsbadge: { backgroundColor: 'rgba(255,255,255,.1)', borderRadius: 12, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)' },
-  odsLabel: { color: '#B7E4C7', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
-  odsText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  
+  climaBadge: { borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, elevation: 2 },
+  climaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  climaLabel: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
+  climaAlert: { fontSize: 10, fontWeight: 'bold', backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  climaText: { fontSize: 11, fontWeight: '500', opacity: 0.9 },
+
   sec: { paddingHorizontal: 14, paddingTop: 14 },
   sech: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   sect: { fontSize: 15, fontWeight: 'bold', color: '#1B4332' },
